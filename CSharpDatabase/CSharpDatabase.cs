@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Windows.Forms;
 using System.Runtime.InteropServices;
 
 namespace CSharpDatabase
@@ -52,7 +53,20 @@ namespace CSharpDatabase
                         }
                     }
                 }
+                else
+                {
+                    if (MessageBox.Show(null, "Database is already existing.\nOverwrite it?", "Warning",
+                        MessageBoxButtons.YesNo, MessageBoxIcon.Warning) is DialogResult.Yes)
+                    {
+                        overwrite = true;
+                    }
+                    else
+                    {
+                        overwrite = false;
+                    }
+                }
             }
+            //Check if overwriting is allowed
             if (overwrite is true)
             {
                 //Create the Database
@@ -60,6 +74,10 @@ namespace CSharpDatabase
                 {
 
                 }
+            }
+            else
+            {
+
             }
         }
     }
