@@ -5,7 +5,6 @@ using System.Runtime.InteropServices;
 
 namespace CSharpDatabase
 {
-    [Serializable]
     public class CSharpDatabase
     {
         [DllImport("kernel32.dll")]
@@ -69,6 +68,11 @@ namespace CSharpDatabase
             //Check if overwriting is allowed
             if (overwrite is true)
             {
+                //Check if Path has File Extension
+                if (path.Contains(".") is true)
+                {
+                    path = path.Remove(path.IndexOf("."));
+                }
                 //Create the Database
                 using (FileStream stream = File.Create(path))
                 {
