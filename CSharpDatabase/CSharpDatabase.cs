@@ -16,25 +16,31 @@ namespace CSharpDatabase
 
         }
 
-        public void Connect()
+        public void Open(string path)
         {
-
+            
         }
 
         public void Create(string path)
         {
             bool overwrite = true;
+
+            //Check if Path has File Extension
+            if (path.Contains("."))
+            {
+                path = path.Remove(path.IndexOf("."));
+            }
             //Check if file already exists
-            if (File.Exists(path) is true)
+            if (File.Exists(path + ".csdb"))
             {
                 //Adapt to Console or GUI
                 if (GetConsoleWindow() != IntPtr.Zero)
                 {
                     //Ask for Overwriting
-                    Console.WriteLine("Database is already existing.\nOverwrite it? [yes/no]");
                     while (true)
                     {
                         Console.Clear();
+                        Console.WriteLine("Database is already existing.\nOverwrite it? [yes/no]");
                         var choice = Console.ReadLine();
                         if (choice.ToLower() == "yes")
                         {
@@ -49,11 +55,13 @@ namespace CSharpDatabase
                         else
                         {
                             Console.WriteLine("No valid option.");
+                            Console.ReadKey();
                         }
                     }
                 }
                 else
                 {
+                    //Ask for Overwriting
                     if (MessageBox.Show(null, "Database is already existing.\nOverwrite it?", "Warning",
                         MessageBoxButtons.YesNo, MessageBoxIcon.Warning) is DialogResult.Yes)
                     {
@@ -66,22 +74,48 @@ namespace CSharpDatabase
                 }
             }
             //Check if overwriting is allowed
-            if (overwrite is true)
+            if (overwrite)
             {
-                //Check if Path has File Extension
-                if (path.Contains(".") is true)
+                //Create the Database with csdb file extension (CSharpDatabase)
+                try
                 {
-                    path = path.Remove(path.IndexOf("."));
-                }
-                //Create the Database
-                using (FileStream stream = File.Create(path))
-                {
+                    using (FileStream stream = File.Create(path + ".csdb"))
+                    {
+                        stream.Close();
+                    }
+                    Console.WriteLine("Database has been created. Open it? [yes/no]");
+                    while (true)
+                    {
+                        var choice = Console.ReadLine();
+                        if (choice.ToLower() == "yes")
+                        {
+                            Open(path + ".csdb");
+                            break;
+                        }
+                        else if (choice.ToLower() == "no")
+                        {
 
+                            break;
+                        }
+                        else
+                        {
+                            Console.WriteLine("No valid option.");
+                            Console.ReadKey();
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    //Inform the user if the path
+                    if (e is DirectoryNotFoundException)
+                    {
+                        Console.WriteLine("The used path is unavailable or doesn´t exist.");
+                    }
                 }
             }
             else
             {
-
+                Console.WriteLine("Database has not been overwritten.");
             }
         }
     }
