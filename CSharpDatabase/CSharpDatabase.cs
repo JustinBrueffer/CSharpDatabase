@@ -2,6 +2,7 @@
 using System.IO;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace CSharpDatabase
 {
@@ -81,7 +82,10 @@ namespace CSharpDatabase
                 {
                     using (FileStream stream = File.Create(path + ".csdb"))
                     {
+                        AddHeader(path + ".csdb");
                         stream.Close();
+                        //Encrypt the file
+                        File.Encrypt(path + ".csdb");
                     }
                     Console.WriteLine("Database has been created. Open it? [yes/no]");
                     while (true)
@@ -106,7 +110,7 @@ namespace CSharpDatabase
                 }
                 catch (Exception e)
                 {
-                    //Inform the user if the path
+                    //Inform the user if the path is not usable
                     if (e is DirectoryNotFoundException)
                     {
                         Console.WriteLine("The used path is unavailable or doesn´t exist.");
@@ -117,6 +121,22 @@ namespace CSharpDatabase
             {
                 Console.WriteLine("Database has not been overwritten.");
             }
+        }
+        private void AddHeader(string path)
+        {
+            Header header = new Header();
+            
+        }
+    }
+    class Header
+    {
+        readonly public byte[] header;
+        public Header()
+        {
+            System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
+            string version = fvi.FileVersion;
+            header = System.Text.Encoding.GetEncoding(88).GetBytes("\0001" + version);
         }
     }
 }
