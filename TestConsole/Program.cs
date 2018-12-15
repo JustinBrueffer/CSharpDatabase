@@ -11,6 +11,7 @@ namespace TestConsole
         {
             CSharpDatabase.CSharpDatabase cSharpDatabase = new CSharpDatabase.CSharpDatabase();
             cSharpDatabase.Create("Test.db");
+            cSharpDatabase.Open("Test.csdb");
         }
     }
 }

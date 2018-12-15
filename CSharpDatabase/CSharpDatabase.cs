@@ -1,17 +1,12 @@
 ﻿using System;
-using System.IO;
-using System.Windows.Forms;
-using System.Runtime.InteropServices;
 using System.Diagnostics;
+using System.IO;
 
 namespace CSharpDatabase
 {
     public class CSharpDatabase
     {
-        [DllImport("kernel32.dll")]
-        static extern IntPtr GetConsoleWindow();
-        private string Name;
-
+        private FileStream stream;
         public CSharpDatabase()
         {
 
@@ -19,124 +14,76 @@ namespace CSharpDatabase
 
         public void Open(string path)
         {
-            
+            //Open the Database
+            stream = File.Open(path, FileMode.Open, FileAccess.ReadWrite);
+            byte[] temp = new byte[1];
+            stream.Read(temp, 0, temp.Length);
+            string x = System.Text.Encoding.GetEncoding(437).GetString(temp);
+            if(x)
         }
 
         public void Create(string path)
         {
-            bool overwrite = true;
 
             //Check if Path has File Extension
             if (path.Contains("."))
             {
                 path = path.Remove(path.IndexOf("."));
             }
-            //Check if file already exists
-            if (File.Exists(path + ".csdb"))
-            {
-                //Adapt to Console or GUI
-                if (GetConsoleWindow() != IntPtr.Zero)
-                {
-                    //Ask for Overwriting
-                    while (true)
-                    {
-                        Console.Clear();
-                        Console.WriteLine("Database is already existing.\nOverwrite it? [yes/no]");
-                        var choice = Console.ReadLine();
-                        if (choice.ToLower() == "yes")
-                        {
-                            overwrite = true;
-                            break;
-                        }
-                        else if (choice.ToLower() == "no")
-                        {
-                            overwrite = false;
-                            break;
-                        }
-                        else
-                        {
-                            Console.WriteLine("No valid option.");
-                            Console.ReadKey();
-                        }
-                    }
-                }
-                else
-                {
-                    //Ask for Overwriting
-                    if (MessageBox.Show(null, "Database is already existing.\nOverwrite it?", "Warning",
-                        MessageBoxButtons.YesNo, MessageBoxIcon.Warning) is DialogResult.Yes)
-                    {
-                        overwrite = true;
-                    }
-                    else
-                    {
-                        overwrite = false;
-                    }
-                }
-            }
-            //Check if overwriting is allowed
-            if (overwrite)
-            {
-                //Create the Database with csdb file extension (CSharpDatabase)
-                try
-                {
-                    using (FileStream stream = File.Create(path + ".csdb"))
-                    {
-                        AddHeader(path + ".csdb");
-                        stream.Close();
-                        //Encrypt the file
-                        File.Encrypt(path + ".csdb");
-                    }
-                    Console.WriteLine("Database has been created. Open it? [yes/no]");
-                    while (true)
-                    {
-                        var choice = Console.ReadLine();
-                        if (choice.ToLower() == "yes")
-                        {
-                            Open(path + ".csdb");
-                            break;
-                        }
-                        else if (choice.ToLower() == "no")
-                        {
 
-                            break;
-                        }
-                        else
-                        {
-                            Console.WriteLine("No valid option.");
-                            Console.ReadKey();
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    //Inform the user if the path is not usable
-                    if (e is DirectoryNotFoundException)
-                    {
-                        Console.WriteLine("The used path is unavailable or doesn´t exist.");
-                    }
-                }
-            }
-            else
+            //Create the Database with csdb file extension (CSharpDatabase)
+            using (FileStream stream = File.Create(path + ".csdb"))
             {
-                Console.WriteLine("Database has not been overwritten.");
+                //Add the Header
+                AddHeader(path + ".csdb", stream);
+                stream.Close();
             }
         }
-        private void AddHeader(string path)
+
+        private void AddHeader(string path, FileStream stream)
         {
             Header header = new Header();
-            
+            stream.Write(header.header, 0, header.header.Length);
+        }
+
+        public int GetTableCount()
+        {
+            if (stream.CanRead)
+            {
+                byte[] temp = new byte[1];
+                int tableCount;
+
+                stream.Position = 11;
+                stream.Read(temp, 0, temp.Length);
+                tableCount = Convert.ToInt32(System.Text.Encoding.GetEncoding(437).GetString(temp));
+
+                return tableCount;
+            }
+            else
+                throw new Exception("No Database opened");
         }
     }
+
+    class Table
+    {
+        private string[] columns;
+        public Table(string[] columns)
+        {
+            this.columns = columns;
+        }
+
+    }
+
     class Header
     {
-        readonly public byte[] header;
+        public readonly byte[] header;
+        private int tableCount = 0;
         public Header()
         {
             System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
             FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
             string version = fvi.FileVersion;
-            header = System.Text.Encoding.GetEncoding(88).GetBytes("\0001" + version);
+            header = System.Text.Encoding.GetEncoding(437).GetBytes("\01" + version + "\02" + tableCount + "\03CSharpDatabase");
         }
     }
 }
